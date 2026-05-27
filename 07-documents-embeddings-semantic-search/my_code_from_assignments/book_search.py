@@ -1,12 +1,4 @@
-"""
-Chapter 7 Assignment Solution: Challenge 2
-Semantic Book Search
-
-Run: python 07-documents-embeddings-semantic-search/solution/book_search.py
-"""
-
 import os
-
 from dotenv import load_dotenv
 from langchain_core.documents import Document
 from langchain_core.vectorstores import InMemoryVectorStore
@@ -62,17 +54,12 @@ BOOKS = [
 
 
 def main():
-    print("📚 Semantic Book Search\n")
-    print("=" * 80 + "\n")
-
     embeddings = AzureOpenAIEmbeddings(
         azure_endpoint=get_embeddings_endpoint(),
         api_key=os.getenv("AI_API_KEY"),
         model=os.getenv("AI_EMBEDDING_MODEL", "text-embedding-ada-002"),
         api_version="2024-02-01",
     )
-
-    print("📖 Loading books into vector store...\n")
 
     documents = [
         Document(
@@ -84,9 +71,6 @@ def main():
 
     vector_store = InMemoryVectorStore.from_documents(documents, embeddings)
 
-    print(f"✅ Loaded {len(BOOKS)} books\n")
-    print("=" * 80 + "\n")
-
     queries = [
         "books about programming",
         "stories set in space",
@@ -95,25 +79,12 @@ def main():
     ]
 
     for query in queries:
-        print(f'🔍 Query: "{query}"\n')
-        print("─" * 80)
-
         results = vector_store.similarity_search_with_score(query, k=3)
 
         for index, (doc, score) in enumerate(results):
             print(f"\n{index + 1}. {doc.metadata.get('title')}")
-            print(f"   Relevance: {score * 100:.1f}%")
-            print(f"   Summary: {doc.page_content}")
-
-        print("\n" + "─" * 80 + "\n")
-
-    print("=" * 80)
-    print("\n✅ Book search complete!")
-    print("\n💡 Notice how semantic search finds:")
-    print("   - 'programming' matches JavaScript AND Python books")
-    print("   - 'space' finds the Space Odyssey story")
-    print("   - 'AI' finds both AI Revolution AND Data Science")
-    print("   - Searches by meaning, not just exact keywords!")
+            print(f"Relevance: {score * 100:.1f}%")
+            print(f"Summary: {doc.page_content}")
 
 
 if __name__ == "__main__":

@@ -1,9 +1,3 @@
-"""
-Assignment Solution: Research Agent with create_agent()
-
-Run: python 05-agents/solution/research_agent.py
-"""
-
 import os
 
 from dotenv import load_dotenv
@@ -15,7 +9,6 @@ from pydantic import BaseModel, Field
 
 # Load environment variables
 load_dotenv()
-
 
 class SearchInput(BaseModel):
     """Input for search tool."""
@@ -72,36 +65,21 @@ def calculator(expression: str) -> str:
 
 
 def main():
-    print("🔍 Research Agent using create_agent()\n")
-    print("=" * 80 + "\n")
-
-    # Create the model
     model = ChatOpenAI(
         model=os.getenv("AI_MODEL"),
         base_url=os.getenv("AI_ENDPOINT"),
         api_key=os.getenv("AI_API_KEY"),
     )
-
-    # Create agent using create_agent() - handles ReAct loop automatically
     agent = create_agent(model, tools=[search, calculator])
-
-    # Test queries
     queries = [
         "What is the population of Tokyo multiplied by 2?",
         "Search for the capital of France and tell me how many letters are in its name",
     ]
 
     for query in queries:
-        print(f"👤 User: {query}\n")
-
-        # Invoke the agent - it handles the ReAct loop internally
         response = agent.invoke({"messages": [HumanMessage(content=query)]})
-
-        # Get the final answer (last message)
         last_message = response["messages"][-1]
         print(f"🤖 Agent: {last_message.content}\n")
-
-        # Show which tools were used
         tool_calls = []
         for msg in response["messages"]:
             if isinstance(msg, AIMessage) and msg.tool_calls:
@@ -109,16 +87,8 @@ def main():
 
         if tool_calls:
             unique_tools = list(set(tool_calls))
-            print(f"📊 Tools used: {', '.join(unique_tools)}")
-            print(f"   Total tool calls: {len(tool_calls)}\n")
-
-        print("=" * 80 + "\n")
-
-    print("💡 Key Concepts:")
-    print("   • create_agent() handles the ReAct loop automatically")
-    print("   • Agent decides which tools to use and when")
-    print("   • Agent iterates until it has enough information")
-    print("   • Much simpler than manual loop implementation")
+            print(f"Tools used: {', '.join(unique_tools)}")
+            print(f"Total tool calls: {len(tool_calls)}\n")
 
 
 if __name__ == "__main__":

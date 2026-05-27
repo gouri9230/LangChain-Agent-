@@ -1,10 +1,3 @@
-"""
-Chapter 8 Assignment Solution: Bonus Challenge
-Conversational Agentic RAG
-
-Run: python 08-agentic-rag-systems/solution/conversational_rag.py
-"""
-
 import os
 
 from dotenv import load_dotenv
@@ -54,10 +47,6 @@ knowledge_base = [
 
 
 def main():
-    print("💬 Conversational Agentic RAG System\n")
-    print("=" * 80 + "\n")
-
-    # 1. Setup
     embeddings = AzureOpenAIEmbeddings(
         azure_endpoint=get_embeddings_endpoint(),
         api_key=os.getenv("AI_API_KEY"),
@@ -72,15 +61,11 @@ def main():
     )
 
     print(f"Creating vector store with {len(knowledge_base)} documents...\n")
-
-    # 2. Create vector store
     vector_store = InMemoryVectorStore.from_documents(knowledge_base, embeddings)
 
-    # 3. Create retrieval tool for the agent
     @tool
     def search_python_knowledge_base(query: str) -> str:
         """Search the Python knowledge base for information about Python features, benefits, type system, decorators, and list comprehensions. Use this when you need specific information about Python from the documentation."""
-        print(f'   🔍 Agent searching for: "{query}"')
         results = vector_store.similarity_search(query, k=2)
 
         if not results:
@@ -91,50 +76,44 @@ def main():
             for doc in results
         )
 
-    # 4. Create agent with retrieval tool
     agent = create_agent(
         model,
         tools=[search_python_knowledge_base],
         system_prompt="You are a helpful Python expert assistant with access to Python documentation. Use the search tool when you need specific information about Python features, syntax, or best practices. For general questions, answer directly. Remember the conversation history to provide contextual responses.",
     )
 
-    # 5. Initialize conversation history
     conversation_history: list[HumanMessage | AIMessage] = []
 
-    # Check if running in CI mode for automated testing
     is_ci = os.getenv("CI") == "true"
 
-    print("💡 Instructions:")
+    print("Instructions:")
     print("   - Ask questions about Python")
     print("   - Ask follow-up questions to test conversation memory")
     print("   - Type 'reset' to start a new conversation")
     print("   - Type 'exit' or 'quit' to end\n")
-    print("=" * 80 + "\n")
 
-    # 6. Conversation loop
     question_count = 0
 
     while True:
         try:
             user_input = input("You: ").strip()
         except EOFError:
-            print("\n👋 Goodbye! Thanks for chatting!\n")
+            print("\nGoodbye! Thanks for chatting!\n")
             break
 
         # Handle special commands
         if user_input.lower() in ("exit", "quit"):
-            print("\n👋 Goodbye! Thanks for chatting!\n")
+            print("\nGoodbye! Thanks for chatting!\n")
             break
 
         if user_input.lower() == "reset":
             conversation_history.clear()
-            print("\n🔄 Conversation reset. Starting fresh!\n")
+            print("\nConversation reset. Starting fresh!\n")
             continue
 
         if not user_input:
             continue
 
-        # Add user message to history
         user_message = HumanMessage(content=user_input)
         conversation_history.append(user_message)
 
@@ -151,12 +130,10 @@ def main():
             conversation_history.append(AIMessage(content=agent_message.content))
 
             print(f"\nAgent: {agent_message.content}\n")
-            print("=" * 80 + "\n")
 
-            # In CI mode, exit after answering one question
             question_count += 1
             if is_ci and question_count >= 1:
-                print("✅ CI Mode: Answered one question successfully. Exiting.\n")
+                print("CI Mode: Answered one question successfully. Exiting.\n")
                 break
 
         except Exception as e:

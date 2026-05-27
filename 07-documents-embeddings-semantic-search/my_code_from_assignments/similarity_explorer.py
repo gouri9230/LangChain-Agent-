@@ -1,10 +1,3 @@
-"""
-Chapter 7 Assignment Solution: Challenge 1
-Similarity Explorer
-
-Run: python 07-documents-embeddings-semantic-search/solution/similarity_explorer.py
-"""
-
 import math
 import os
 
@@ -45,11 +38,7 @@ SENTENCES = [
     "It's raining outside",
 ]
 
-
 def main():
-    print("🔬 Similarity Explorer\n")
-    print("=" * 80 + "\n")
-
     embeddings = AzureOpenAIEmbeddings(
         azure_endpoint=get_embeddings_endpoint(),
         api_key=os.getenv("AI_API_KEY"),
@@ -57,14 +46,7 @@ def main():
         api_version="2024-02-01",
     )
 
-    print("📝 Creating embeddings for 10 sentences...\n")
-
     all_embeddings = embeddings.embed_documents(SENTENCES)
-
-    print(f"✅ Created {len(all_embeddings)} embeddings")
-    print(f"   Dimensions: {len(all_embeddings[0])}\n")
-
-    print("=" * 80 + "\n")
 
     # Calculate all pairs
     similarities: list[dict] = []
@@ -85,26 +67,18 @@ def main():
     similarities.sort(key=lambda x: x["score"], reverse=True)
 
     # Most similar pair
-    print("🏆 MOST SIMILAR PAIR:\n")
-    print("─" * 80)
+    print("MOST SIMILAR PAIR:\n")
     most_similar = similarities[0]
     print(f"Score: {most_similar['score']:.4f}")
     print(f'\n"{SENTENCES[most_similar["i"]]}"')
     print(f'"{SENTENCES[most_similar["j"]]}"\n')
 
     # Least similar pair
-    print("─" * 80 + "\n")
-    print("❄️  LEAST SIMILAR PAIR:\n")
-    print("─" * 80)
+    print("LEAST SIMILAR PAIR:\n")
     least_similar = similarities[-1]
     print(f"Score: {least_similar['score']:.4f}")
     print(f'\n"{SENTENCES[least_similar["i"]]}"')
     print(f'"{SENTENCES[least_similar["j"]]}"\n')
-
-    # High similarity pairs (> 0.8)
-    print("─" * 80 + "\n")
-    print("⭐ HIGH SIMILARITY PAIRS (Score > 0.8):\n")
-    print("─" * 80)
 
     high_similarity = [s for s in similarities if s["score"] > 0.8]
 
@@ -117,31 +91,18 @@ def main():
             print(f'"{SENTENCES[sim["j"]]}"')
         print()
 
-    # Topic clustering
-    print("─" * 80 + "\n")
-    print("📊 TOPIC CLUSTERING:\n")
-    print("─" * 80 + "\n")
-
     # Programming cluster (0, 1, 2, 3, 4)
-    print("💻 Programming/Tech Topic:")
+    print("Programming/Tech Topic:")
     for i in [0, 1, 2, 3, 4]:
         print(f"   {i + 1}. {SENTENCES[i]}")
 
-    print("\n🐾 Pets Topic:")
+    print("\nPets Topic:")
     for i in [5, 6, 7]:
         print(f"   {i + 1}. {SENTENCES[i]}")
 
-    print("\n☀️  Weather Topic:")
+    print("\nWeather Topic:")
     for i in [8, 9]:
         print(f"   {i + 1}. {SENTENCES[i]}")
-
-    print("\n" + "=" * 80)
-    print("\n✅ Analysis complete!")
-    print("\n💡 Key Observations:")
-    print("   - Sentences about the same topic cluster together")
-    print("   - JavaScript/programming sentences are most similar to each other")
-    print("   - Unrelated topics (e.g., programming vs weather) have low similarity")
-    print("   - Embeddings capture semantic meaning, not just keyword matching!")
 
 
 if __name__ == "__main__":

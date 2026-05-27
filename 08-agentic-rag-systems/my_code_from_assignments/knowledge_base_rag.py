@@ -1,10 +1,3 @@
-"""
-Chapter 8 Assignment Solution: Challenge 1
-Personal Knowledge Base Q&A (Agentic RAG)
-
-Run: python 08-agentic-rag-systems/solution/knowledge_base_rag.py
-"""
-
 import os
 
 from dotenv import load_dotenv
@@ -27,8 +20,6 @@ def get_embeddings_endpoint():
         endpoint = endpoint.replace("/openai/v1/", "")
     return endpoint
 
-
-# Sample knowledge base - you can replace with your own documents
 knowledge_base = [
     Document(
         page_content="Python is a typed superset of Python... wait, that's TypeScript! Python is a versatile, interpreted programming language known for its readability and extensive standard library. It's popular for data science, web development, and automation.",
@@ -62,10 +53,6 @@ knowledge_base = [
 
 
 def main():
-    print("📚 Personal Knowledge Base Q&A (Agentic RAG)\n")
-    print("=" * 80 + "\n")
-
-    # 1. Setup
     embeddings = AzureOpenAIEmbeddings(
         azure_endpoint=get_embeddings_endpoint(),
         api_key=os.getenv("AI_API_KEY"),
@@ -80,15 +67,11 @@ def main():
     )
 
     print(f"Creating vector store with {len(knowledge_base)} documents...\n")
-
-    # 2. Create vector store
     vector_store = InMemoryVectorStore.from_documents(knowledge_base, embeddings)
 
-    # 3. Create retrieval tool for the agent
     @tool
     def search_my_notes(query: str) -> str:
         """Search my personal knowledge base for information about Python, React, Docker, REST APIs, Git, and databases. Use this when you need specific technical information from my notes."""
-        print(f'   🔍 Agent searching for: "{query}"')
         results = vector_store.similarity_search(query, k=3)
 
         if not results:
@@ -99,14 +82,12 @@ def main():
             for doc in results
         )
 
-    # 4. Create agent with retrieval tool
     agent = create_agent(
         model,
         tools=[search_my_notes],
         system_prompt="You are a helpful personal assistant with access to my knowledge base containing notes about Python, React, Docker, REST APIs, Git, and databases. Use the search tool when you need specific technical information from my notes. For general knowledge questions, answer directly.",
     )
 
-    # 5. Test with mix of questions
     questions = [
         # General knowledge - agent should answer directly
         "What is 2 + 2?",
@@ -119,28 +100,13 @@ def main():
         "What is Kubernetes?",
     ]
 
-    print("💡 Testing agent with different types of questions:\n")
-    print("Watch how the agent intelligently decides when to search vs answer directly!\n")
-
     for question in questions:
-        print("=" * 80)
-        print(f"\n❓ Question: {question}\n")
-
         response = agent.invoke({
             "messages": [HumanMessage(content=question)],
         })
 
         final_message = response["messages"][-1]
-        print("🤖 Answer:", final_message.content)
-        print()
-
-    print("=" * 80)
-    print("\n✅ Key Observations:")
-    print("   - Agent answers general knowledge questions directly (no search needed)")
-    print("   - Agent searches knowledge base for technical questions")
-    print("   - Agent decides WHEN to search based on question context")
-    print("   - More efficient than always searching!")
-    print("\n💡 This is the power of Agentic RAG - intelligent, autonomous retrieval!")
+        print("Answer:", final_message.content)
 
 
 if __name__ == "__main__":

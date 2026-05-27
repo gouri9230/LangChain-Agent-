@@ -1,23 +1,15 @@
-"""
-Chapter 4 Assignment Solution: Multi-Tool Travel Assistant
-
-Run: python 04-function-calling-tools/solution/travel_assistant.py
-"""
-
 import os
 from datetime import datetime, timezone
-from typing import Literal, Optional
-
 from dotenv import load_dotenv
 from langchain_core.tools import tool
+from langchain_core.messages import HumanMessage, AIMessage, ToolMessage
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
+from typing import Optional, Literal
 
 # Load environment variables
 load_dotenv()
 
-
-# Tool 1: Currency Converter
 class CurrencyInput(BaseModel):
     """Input for currency converter."""
 
@@ -29,6 +21,23 @@ class CurrencyInput(BaseModel):
         description="Target currency code (e.g., 'USD', 'EUR', 'GBP')",
     )
 
+class DistanceInput(BaseModel):
+    """Input for distance calculator."""
+
+    from_city: str = Field(
+        description="Starting city name, e.g., 'New York' or 'Paris'",
+    )
+    to_city: str = Field(
+        description="Destination city name, e.g., 'London' or 'Tokyo'",
+    )
+    units: Optional[Literal["miles", "kilometers"]] = Field(
+        default="kilometers",
+        description="Distance unit (default: kilometers)",
+    )
+
+class TimeZoneInput(BaseModel):
+    """Input for time zone tool."""
+    city: str = Field(description="City name to get time for, e.g., 'Tokyo' or 'New York'")
 
 @tool(args_schema=CurrencyInput)
 def currency_converter(amount: float, from_currency: str, to_currency: str) -> str:
@@ -61,23 +70,6 @@ def currency_converter(amount: float, from_currency: str, to_currency: str) -> s
     result = amount_in_usd * to_rate
 
     return f"{amount} {from_currency.upper()} equals approximately {result:.2f} {to_currency.upper()}"
-
-
-# Tool 2: Distance Calculator
-class DistanceInput(BaseModel):
-    """Input for distance calculator."""
-
-    from_city: str = Field(
-        description="Starting city name, e.g., 'New York' or 'Paris'",
-    )
-    to_city: str = Field(
-        description="Destination city name, e.g., 'London' or 'Tokyo'",
-    )
-    units: Optional[Literal["miles", "kilometers"]] = Field(
-        default="kilometers",
-        description="Distance unit (default: kilometers)",
-    )
-
 
 @tool(args_schema=DistanceInput)
 def distance_calculator(
@@ -116,14 +108,6 @@ def distance_calculator(
 
     return f"The distance from {from_city} to {to_city} is approximately {distance} {unit}"
 
-
-# Tool 3: Time Zone Tool
-class TimeZoneInput(BaseModel):
-    """Input for time zone tool."""
-
-    city: str = Field(description="City name to get time for, e.g., 'Tokyo' or 'New York'")
-
-
 @tool(args_schema=TimeZoneInput)
 def time_zone_tool(city: str) -> str:
     """Get the current time in a specific city and its time zone information.
@@ -160,23 +144,17 @@ def time_zone_tool(city: str) -> str:
 
     return f"Current time in {city}: {formatted_time} {city_tz['name']} (UTC{offset_str})"
 
-
 def main():
-    print("🌍 Multi-Tool Travel Assistant\n")
-    print("=" * 80 + "\n")
-
     model = ChatOpenAI(
         model=os.getenv("AI_MODEL"),
         base_url=os.getenv("AI_ENDPOINT"),
         api_key=os.getenv("AI_API_KEY"),
     )
 
-    model_with_tools = model.bind_tools([
-        currency_converter,
+    model_with_tools = model.bind_functions([currency_converter,
         distance_calculator,
-        time_zone_tool,
-    ])
-
+        time_zone_tool])
+    
     # Map tool names to functions
     tools_map = {
         "currency_converter": currency_converter,
@@ -184,7 +162,6 @@ def main():
         "time_zone_tool": time_zone_tool,
     }
 
-    # Test queries for each tool
     queries = [
         "Convert 100 USD to EUR",
         "What's the distance between New York and London?",
@@ -194,34 +171,21 @@ def main():
     ]
 
     for query in queries:
-        print(f"\nQuery: \"{query}\"")
-
         response = model_with_tools.invoke(query)
-
         if response.tool_calls and len(response.tool_calls) > 0:
             tool_call = response.tool_calls[0]
-            print(f"  → LLM chose: {tool_call['name']}")
-            print(f"  → Args: {tool_call['args']}")
+            print(f"LLM chose: {tool_call['name']}")
+            print(f"Args: {tool_call['args']}")
 
             # Execute the tool
             tool_fn = tools_map.get(tool_call["name"])
             if tool_fn:
                 tool_result = tool_fn.invoke(tool_call["args"])
-                print(f"  → Result: {tool_result}")
+                print(f"Result: {tool_result}")
             else:
-                print("  → Unknown tool")
+                print("Unknown tool")
         else:
-            print(f"  → Direct response: {response.content}")
-
-        print("─" * 80)
-
-    print("\n" + "=" * 80 + "\n")
-    print("💡 Key Takeaways:")
-    print("   • LLM automatically selects the right tool")
-    print("   • Clear descriptions help tool selection")
-    print("   • Each tool handles its domain (currency, distance, time)")
-    print("   • Error handling provides helpful messages")
-
-
+            print(f" Direct response: {response.content}")
+        
 if __name__ == "__main__":
     main()

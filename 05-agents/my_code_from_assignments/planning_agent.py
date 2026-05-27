@@ -1,9 +1,3 @@
-"""
-Chapter 5 Assignment Solution: Multi-Step Planning Agent
-
-Run: python 05-agents/solution/planning_agent.py
-"""
-
 import os
 from typing import Literal
 
@@ -14,11 +8,8 @@ from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
-# Load environment variables
 load_dotenv()
 
-
-# Tool 1: Search
 class SearchInput(BaseModel):
     """Input for search."""
 
@@ -138,36 +129,24 @@ def comparison_tool(
 
 
 def main():
-    print("🎯 Multi-Step Planning Agent using create_agent()\n")
-    print("=" * 80 + "\n")
-
-    # Create the model
     model = ChatOpenAI(
         model=os.getenv("AI_MODEL"),
         base_url=os.getenv("AI_ENDPOINT"),
         api_key=os.getenv("AI_API_KEY"),
     )
 
-    # Create agent using create_agent() - handles multi-tool selection automatically
     agent = create_agent(
         model, tools=[search, calculator, unit_converter, comparison_tool]
     )
-
-    # Test queries requiring multiple steps
     queries = [
         "What's the distance from London to Paris in miles, and is that more or less than 500 miles?",
         "Find the city population of New York and Tokyo, calculate the difference, and tell me the result",
     ]
 
     for query in queries:
-        print(f'\n🤔 Query: "{query}"\n')
-
-        # Invoke the agent - it handles multi-step reasoning internally
         response = agent.invoke({"messages": [HumanMessage(content=query)]})
-
-        # Get the final answer
         last_message = response["messages"][-1]
-        print(f"\n✅ Agent: {last_message.content}\n")
+        print(f"\nAgent: {last_message.content}\n")
 
         # Analyze which tools were used
         tool_calls = []
@@ -177,21 +156,9 @@ def main():
 
         if tool_calls:
             unique_tools = list(set(tool_calls))
-            print("─" * 80)
-            print("📊 Agent Summary:")
+            print("Agent Summary:")
             print(f"   • Tools used: {', '.join(unique_tools)}")
             print(f"   • Total tool calls: {len(tool_calls)}")
-            print("   • Query solved successfully!")
-
-        print("\n" + "=" * 80 + "\n")
-
-    print("💡 Key Concepts:")
-    print("   • create_agent() handles multi-step reasoning automatically")
-    print("   • Agent chains multiple tools together")
-    print("   • Each tool call builds on previous results")
-    print("   • Clear descriptions help agent pick right tool")
-    print("   • Complex queries are broken down into manageable steps")
-
 
 if __name__ == "__main__":
     main()

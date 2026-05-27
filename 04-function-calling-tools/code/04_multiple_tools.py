@@ -18,7 +18,6 @@ from pydantic import BaseModel, Field
 # Load environment variables
 load_dotenv()
 
-
 class CalculatorInput(BaseModel):
     """Input for calculator."""
 
